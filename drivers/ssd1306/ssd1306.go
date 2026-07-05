@@ -172,4 +172,5 @@ func (d *Device) CurrentDisplayBuffer() []byte {
 var (
 	errOutOfRange  = errors.New("ssd1306: rectangle out of range")
 	errShortBuffer = errors.New("ssd1306: buffer too short")
+	errBadStepper  = errors.New("ssd1306: shape stepper left octant or stalled")
 )

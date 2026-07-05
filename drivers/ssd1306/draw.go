@@ -33,6 +33,10 @@ func (drw *Drawer) DrawCircle(x, y, radius int, on bool) error {
 	return DrawCircle(drw.Buffer, x, y, radius, drw.DisplayWidth, on)
 }
 
+func (drw *Drawer) DrawFilledCircle(x, y, radius int, on bool) error {
+	return DrawFilledCircle(drw.Buffer, x, y, radius, drw.DisplayWidth, on)
+}
+
 func BufferPixelByteOff(x int, y int, displayWidth int) int {
 	return 1 + x + (y/8)*displayWidth // +1 for the data mode byte.
 }
@@ -170,44 +174,95 @@ func DrawLine(displayBuf []byte, x0, y0, x1, y1, displayWidth int, on bool) erro
 	return nil
 }
 
-// DrawCircle draws the outline of a circle centered at (x, y) using the
-// midpoint circle algorithm, as in u8g2's u8g2_DrawCircle:
-// https://github.com/olikraus/u8g2/blob/master/csrc/u8g2_circle.c
+// ShapeStepper advances the octant point (dx, dy) of an 8-fold symmetric
+// shape from (radius, 0) towards the dx == dy diagonal, carrying the error
+// accumulator t1 between steps. See DrawShape for the walking loop.
+type ShapeStepper func(dx, dy, t1 int) (dxnext, dynext, t1next int)
+
+// nextCircle steps along a circle using Jesko's variant of the midpoint
+// circle algorithm:
+// https://en.wikipedia.org/wiki/Midpoint_circle_algorithm#Jesko's_Method
+func nextCircle(dx, dy, t1 int) (dxnext, dynext, t1next int) {
+	dy++
+	t1 += dy
+	t2 := t1 - dx
+	if t2 >= 0 {
+		t1 = t2
+		dx--
+	}
+	return dx, dy, t1
+}
+
+// DrawCircle draws the outline of a circle centered at (x, y).
 func DrawCircle(displayBuf []byte, x, y, radius, displayWidth int, on bool) error {
+	return DrawShape(displayBuf, x, y, radius, displayWidth, on, false, nextCircle)
+}
+
+// DrawFilledCircle draws a filled circle centered at (x, y).
+func DrawFilledCircle(displayBuf []byte, x, y, radius, displayWidth int, on bool) error {
+	return DrawShape(displayBuf, x, y, radius, displayWidth, on, true, nextCircle)
+}
+
+// DrawShape draws an 8-fold symmetric shape centered at (x, y), as outline or
+// filled, by walking one octant from (radius, 0) with next and mirroring each
+// point into the remaining octants. All shape points must satisfy
+// 0 <= dy <= dx <= radius; a step outside that range stops the walk with an
+// error before anything is drawn out of bounds.
+//
+// See https://gist.github.com/soypat/1253c460cac3a5e0c92862b879a02577 for more shape examples.
+func DrawShape(displayBuf []byte, x, y, radius, displayWidth int, on, fill bool, next ShapeStepper) error {
 	if radius < 0 || x-radius < 0 || y-radius < 0 || x+radius >= displayWidth {
 		return errOutOfRange
 	}
-	// All circle pixels fall inside the bounding box, whose largest byte
+	// All shape pixels fall inside the bounding box, whose largest byte
 	// index is at (x+radius, y+radius), so one check covers the whole loop.
 	if BufferPixelByteOff(x+radius, y+radius, displayWidth) >= len(displayBuf) {
 		return errShortBuffer
 	}
-	f := 1 - radius
-	ddfx, ddfy := 1, -2*radius
-	dx, dy := 0, radius
-	for {
-		// One point per octant, mirrored around the center.
-		setPixel(displayBuf, x+dx, y+dy, displayWidth, on)
-		setPixel(displayBuf, x-dx, y+dy, displayWidth, on)
-		setPixel(displayBuf, x+dx, y-dy, displayWidth, on)
-		setPixel(displayBuf, x-dx, y-dy, displayWidth, on)
-		setPixel(displayBuf, x+dy, y+dx, displayWidth, on)
-		setPixel(displayBuf, x-dy, y+dx, displayWidth, on)
-		setPixel(displayBuf, x+dy, y-dx, displayWidth, on)
-		setPixel(displayBuf, x-dy, y-dx, displayWidth, on)
-		if dx >= dy {
-			break
+	dx, dy := radius, 0
+	t1 := radius / 16 // Initialize for nicer looking shapes (circle case).
+	for dx >= dy {
+		if fill {
+			// Horizontal spans between mirrored octant points; overlapping
+			// spans rewrite the same bit value, so overdraw is harmless.
+			hspan(displayBuf, x-dx, x+dx, y+dy, displayWidth, on)
+			hspan(displayBuf, x-dx, x+dx, y-dy, displayWidth, on)
+			hspan(displayBuf, x-dy, x+dy, y+dx, displayWidth, on)
+			hspan(displayBuf, x-dy, x+dy, y-dx, displayWidth, on)
+		} else {
+			// One point per octant, mirrored around the center.
+			setPixel(displayBuf, x+dx, y+dy, displayWidth, on)
+			setPixel(displayBuf, x-dx, y+dy, displayWidth, on)
+			setPixel(displayBuf, x+dx, y-dy, displayWidth, on)
+			setPixel(displayBuf, x-dx, y-dy, displayWidth, on)
+			setPixel(displayBuf, x+dy, y+dx, displayWidth, on)
+			setPixel(displayBuf, x-dy, y+dx, displayWidth, on)
+			setPixel(displayBuf, x+dy, y-dx, displayWidth, on)
+			setPixel(displayBuf, x-dy, y-dx, displayWidth, on)
 		}
-		if f >= 0 {
-			dy--
-			ddfy += 2
-			f += ddfy
+		dxprev, dyprev := dx, dy
+		dx, dy, t1 = next(dx, dy, t1)
+		if dx > radius || dy < 0 || (dx == dxprev && dy == dyprev) {
+			return errBadStepper
 		}
-		dx++
-		ddfx += 2
-		f += ddfx
 	}
 	return nil
+}
+
+// hspan writes the horizontal pixel run [x0, x1] on row y without bounds
+// checks; the caller must have validated the range against the buffer.
+func hspan(displayBuf []byte, x0, x1, y, displayWidth int, on bool) {
+	bit := uint8(1) << PixelBitOff(y)
+	row := displayBuf[BufferPixelByteOff(x0, y, displayWidth) : BufferPixelByteOff(x1, y, displayWidth)+1]
+	if on {
+		for i := range row {
+			row[i] |= bit
+		}
+	} else {
+		for i := range row {
+			row[i] &^= bit
+		}
+	}
 }
 
 // AppendFormatDisplay appends a text rendering of the display buffer to dst

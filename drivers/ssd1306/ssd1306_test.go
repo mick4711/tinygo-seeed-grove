@@ -29,13 +29,37 @@ func ExampleAppendFormatDisplay() {
 	fmt.Println(string(draw))
 	//output:
 	// ░░░░░░░░░░░░░░░░
+	// ░░░░░░███░░░░░░░
+	// ░██░░██░░█░░░░░░
+	// ░██░█░░░░░█░░░░░
+	// ░██░█░░░░░█░░░░░
+	// ░██░█░░░░░█░░░░░
+	// ░██░░█░░░█░░░░░░
+	// ░░░░░░███░░░░░░░
+}
+
+func ExampleDrawer_DrawFilledCircle() {
+	width := 16
+	height := 8
+	drawer := Drawer{
+		DisplayWidth: width,
+		Buffer:       make([]byte, BufferSize(width, height)),
+	}
+	err := drawer.DrawFilledCircle(7, 4, 3, true)
+	if err != nil {
+		panic(err)
+	}
+	draw := AppendFormatDisplay(nil, drawer.Buffer, width, '█', '░')
+	fmt.Println(string(draw))
+	//output:
 	// ░░░░░░░░░░░░░░░░
-	// ░██░░░█░░░░░░░░░
-	// ░██░░░░░░░░░░░░░
-	// ░██░░░░░░░░░░░░░
-	// ░██░░░░░░░░░░░░░
-	// ░██░░░░░░░░░░░░░
-	// ░░░░░░░░░░░░░░░░
+	// ░░░░░░███░░░░░░░
+	// ░░░░░█████░░░░░░
+	// ░░░░███████░░░░░
+	// ░░░░███████░░░░░
+	// ░░░░███████░░░░░
+	// ░░░░░█████░░░░░░
+	// ░░░░░░███░░░░░░░
 }
 
 func BenchmarkDrawDisplayCircle(b *testing.B) {
