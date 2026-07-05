@@ -5,6 +5,9 @@ package grove
 import (
 	"machine"
 	"sync"
+	"time"
+
+	"tinygo.org/x/drivers/ws2812"
 )
 
 var onceADC sync.Once
@@ -19,6 +22,8 @@ func analog(pn uint8) ADC {
 		SampleTime: 0,
 	})
 	if err != nil {
+		time.Sleep(time.Second)
+		println(err)
 		panic(err)
 	}
 	return sensor.Get
@@ -53,4 +58,11 @@ func i2c(sda, scl uint8, freq uint32) I2C {
 		panic(err)
 	}
 	return bus
+}
+
+func ws2812Dev(pn uint8) RGBOutput {
+	p := dPin[pn]
+	p.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	dev := ws2812.New(p)
+	return &dev
 }

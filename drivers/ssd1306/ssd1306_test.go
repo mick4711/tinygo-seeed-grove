@@ -65,7 +65,7 @@ func ExampleDrawer_DrawFilledCircle() {
 func BenchmarkDrawDisplayCircle(b *testing.B) {
 	const width, height = 64, 48
 	var display Device
-	err := display.ConfigureI2C(mockI2C{}, 0, Config{
+	err := display.ConfigureI2C(mockI2C{}, Config{
 		Width:  width,
 		Height: height,
 		Buffer: make([]byte, BufferSize(width, height)),

@@ -1,14 +1,21 @@
 package grove
 
-import "math"
+import (
+	"image/color"
+	"math"
+)
 
-// Hardware Abstraction Layer for devices.
+// Hardware Abstraction Layer (HAL) for devices.
 type (
 	ADC       func() uint16
 	PinInput  func() (Level bool)
 	PinOutput func(setLevel bool)
 	I2C       interface {
 		Tx(addr uint16, w, r []byte) error
+	}
+	RGBOutput interface {
+		WriteColors([]color.RGBA) error
+		SetBrightness(brightness uint8)
 	}
 )
 
@@ -76,6 +83,10 @@ func (c Conn) PinOutput() PinOutput {
 func (c Conn) I2C(freq uint32) I2C {
 	sda, scl := c.white, c.yellow
 	return i2c(sda, scl, freq)
+}
+
+func (c Conn) RGBOutput() RGBOutput {
+	return ws2812Dev(c.yellow)
 }
 
 func sampleADC(adc ADC, nsamples uint16) (v uint16) {

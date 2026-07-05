@@ -2,6 +2,10 @@
 
 package grove
 
+import (
+	"image/color"
+)
+
 var pinvals [256]bool
 
 func pinout(pn uint8) PinOutput {
@@ -39,4 +43,21 @@ type mockI2C struct{}
 func (mockI2C) Tx(addr uint16, w, r []byte) error {
 	println("i2c addr", addr, "wlen", len(w), "rlen", len(r))
 	return nil
+}
+
+func ws2812Dev(pn uint8) RGBOutput {
+	return mockRGBStrip{}
+}
+
+type mockRGBStrip struct {
+	brighnessPcnt float32
+}
+
+func (ms mockRGBStrip) WriteColors(colors []color.RGBA) error {
+	println("ws2812 write", len(colors), "colors at brightness", ms.brighnessPcnt, "%")
+	return nil
+}
+
+func (ms mockRGBStrip) SetBrightness(brightness uint8) {
+	ms.brighnessPcnt = 100 * float32(brightness) / 255.
 }

@@ -20,7 +20,7 @@ var (
 
 func main() {
 	time.Sleep(time.Second) // wait for USB connection.
-	err := display.ConfigureI2C(shield.Conn(ConnPosition).I2C(400_000), ssd1306.Address_128_32, ssd1306.Config{
+	err := display.ConfigureI2C(shield.Conn(ConnPosition).I2C(400_000), ssd1306.Config{
 		Width:  width,
 		Height: height,
 		Buffer: make([]byte, ssd1306.BufferSize(width, height)),

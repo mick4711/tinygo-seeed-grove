@@ -1,3 +1,5 @@
+//go:build tinygo
+
 // grove-wav streams raw microphone audio from a Grove analog sound sensor over
 // USB serial as fixed-length frames of signed 16-bit little-endian PCM samples,
 // centered on the measured DC bias. It writes no WAV header and never stops; the

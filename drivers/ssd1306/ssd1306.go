@@ -35,6 +35,7 @@ func (d *Device) canReset() bool {
 }
 
 type Config struct {
+	Address uint16
 	Width   int
 	Height  int
 	VccMode VccMode
@@ -46,14 +47,18 @@ type Config struct {
 // Adafruit_SSD1306::begin (https://github.com/adafruit/Adafruit_SSD1306/blob/master/Adafruit_SSD1306.cpp)
 // and the TinyGo port of it (https://github.com/tinygo-org/drivers/blob/release/ssd1306/ssd1306.go),
 // with the 64x48 specifics taken from u8g2 (see links above).
-func (d *Device) ConfigureI2C(bus grove.I2C, addr uint16, config Config) error {
+func (d *Device) ConfigureI2C(bus grove.I2C, config Config) error {
 	*d = Device{
 		bus:        bus,
-		addr:       addr,
 		width:      config.Width,
 		height:     config.Height,
 		displaybuf: d.displaybuf, // keep memory if already set.
 		cmdErr:     nil,          // unset.
+	}
+	if config.Address != 0 {
+		d.addr = config.Address
+	} else if d.addr == 0 {
+		d.addr = Address_128_32
 	}
 	bufsize := BufferSize(d.width, d.height)
 	if len(config.Buffer) < bufsize {
