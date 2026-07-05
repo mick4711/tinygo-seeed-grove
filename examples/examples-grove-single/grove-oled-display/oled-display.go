@@ -36,9 +36,9 @@ func main() {
 	display.Display()
 
 	for {
-		for x := 0; x < width; x++ {
-			for y := 0; y < height; y++ {
-				drawer.SetPixel(x, y, true)
+		for y := 0; y < height; y++ {
+			for x := 0; x < width; x++ {
+				drawer.DrawPixel(x, y, true)
 				display.Display()
 			}
 		}

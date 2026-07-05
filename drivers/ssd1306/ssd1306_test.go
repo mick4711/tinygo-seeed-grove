@@ -7,11 +7,11 @@ func ExampleAppendFormatDisplay() {
 	height := 8
 	bufsize := BufferSize(width, height)
 	buf := make([]byte, bufsize)
-	err := FillRectangle(buf, 1, 2, 2, 5, width, true)
+	err := DrawRectangle(buf, 1, 2, 2, 5, width, true)
 	if err != nil {
 		panic(err)
 	}
-	err = SetPixel(buf, 6, 2, width, true)
+	err = DrawPixel(buf, 6, 2, width, true)
 	if err != nil {
 		panic(err)
 	}

@@ -17,12 +17,12 @@ func (drw *Drawer) Clear() {
 	drw.PatternSet(0)
 }
 
-func (drw *Drawer) SetPixel(x, y int, on bool) error {
-	return SetPixel(drw.Buffer, x, y, drw.DisplayWidth, on)
+func (drw *Drawer) DrawPixel(x, y int, on bool) error {
+	return DrawPixel(drw.Buffer, x, y, drw.DisplayWidth, on)
 }
 
-func (drw *Drawer) FillRectangle(x, y, width, height int, on bool) error {
-	return FillRectangle(drw.Buffer, x, y, width, height, drw.DisplayWidth, on)
+func (drw *Drawer) DrawRectangle(x, y, width, height int, on bool) error {
+	return DrawRectangle(drw.Buffer, x, y, width, height, drw.DisplayWidth, on)
 }
 
 func BufferPixelByteOff(x int, y int, displayWidth int) int {
@@ -33,8 +33,8 @@ func PixelBitOff(y int) int {
 	return y % 8
 }
 
-// SetPixel turns the pixel at (x, y) on or off in the display buffer.
-func SetPixel(displayBuf []byte, x, y, displayWidth int, on bool) error {
+// DrawPixel turns the pixel at (x, y) on or off in the display buffer.
+func DrawPixel(displayBuf []byte, x, y, displayWidth int, on bool) error {
 	if x < 0 || y < 0 || x >= displayWidth {
 		return errOutOfRange
 	}
@@ -51,8 +51,8 @@ func SetPixel(displayBuf []byte, x, y, displayWidth int, on bool) error {
 	return nil
 }
 
-// FillRectangle fills a rectangle at given coordinates, turning pixels on or off.
-func FillRectangle(displayBuf []byte, x, y, rectWidth, rectHeight, displayWidth int, pixelOn bool) error {
+// DrawRectangle fills a rectangle at given coordinates, turning pixels on or off.
+func DrawRectangle(displayBuf []byte, x, y, rectWidth, rectHeight, displayWidth int, pixelOn bool) error {
 	if x < 0 || y < 0 || rectWidth <= 0 || rectHeight <= 0 ||
 		x+rectWidth > displayWidth {
 		return errOutOfRange

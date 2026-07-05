@@ -6,7 +6,11 @@ import (
 	grove "github.com/soypat/seeed-grove"
 )
 
-// https://wiki.seeedstudio.com/Grove-OLED-Display-0.66-SSD1306_v1.0
+// Product wiki: https://wiki.seeedstudio.com/Grove-OLED-Display-0.66-SSD1306_v1.0
+// SSD1306 datasheet (command table in section 9, command descriptions in section 10):
+// https://cdn-shop.adafruit.com/datasheets/SSD1306.pdf
+// Reference driver for the 64x48 panel (u8g2, used by Seeed's Arduino examples):
+// https://github.com/olikraus/u8g2/blob/master/csrc/u8x8_d_ssd1306_64x48.c
 
 // BufferSize returns the required display buffer length: one byte for the
 // leading data-mode byte plus one bit per pixel.
@@ -18,9 +22,12 @@ type Device struct {
 	bus           grove.I2C
 	addr          uint16
 	width, height int
-	cmdbuf        [2]byte
-	displaybuf    []byte
-	cmdErr        error
+	// Column offset of visible area within the controller's 128-column RAM.
+	// Small panels wire the glass to the center columns, e.g. 64x48 uses 32..95.
+	colOffset  uint8
+	cmdbuf     [2]byte
+	displaybuf []byte
+	cmdErr     error
 }
 
 func (d *Device) canReset() bool {
@@ -35,6 +42,10 @@ type Config struct {
 	Buffer []byte
 }
 
+// ConfigureI2C initializes the display. The command sequence follows
+// Adafruit_SSD1306::begin (https://github.com/adafruit/Adafruit_SSD1306/blob/master/Adafruit_SSD1306.cpp)
+// and the TinyGo port of it (https://github.com/tinygo-org/drivers/blob/release/ssd1306/ssd1306.go),
+// with the 64x48 specifics taken from u8g2 (see links above).
 func (d *Device) ConfigureI2C(bus grove.I2C, addr uint16, config Config) error {
 	*d = Device{
 		bus:        bus,
@@ -66,8 +77,20 @@ func (d *Device) ConfigureI2C(bus grove.I2C, addr uint16, config Config) error {
 	}
 
 	d.CommandTuple(MEMORYMODE, 0)
+	// Match u8g2/Adafruit orientation: flip both axes (0xA1, 0xC8), as in
+	// u8x8_d_ssd1306_64x48_er_init_seq:
+	// https://github.com/olikraus/u8g2/blob/master/csrc/u8x8_d_ssd1306_64x48.c
+	d.Command(SEGREMAP | 0x1)
+	d.Command(COMSCANDEC)
 
 	if (d.width == 128 && d.height == 64) || (d.width == 64 && d.height == 48) { // 128x64 or 64x48
+		if d.width == 64 {
+			// Panel glass is wired to the center of the 128-column RAM
+			// (columns 32..95). Same value as u8g2's default_x_offset = 32 in
+			// u8x8_ssd1306_64x48_display_info:
+			// https://github.com/olikraus/u8g2/blob/master/csrc/u8x8_d_ssd1306_64x48.c
+			d.colOffset = 32
+		}
 		d.CommandTuple(SETCOMPINS, 0x12)
 		if config.VccMode == EXTERNALVCC {
 			d.CommandTuple(SETCONTRAST, 0x9F)
@@ -122,6 +145,22 @@ func (d *Device) SetDisplayBuffer(buf []byte) {
 }
 
 func (d *Device) Display() error {
+	// Set the addressing window to the visible area so the horizontal-mode
+	// pointer wraps at the panel edge instead of at RAM column 127.
+	// Set Column Address (0x21) and Set Page Address (0x22): SSD1306 datasheet
+	// sections 10.1.14 and 10.1.15,
+	// https://cdn-shop.adafruit.com/datasheets/SSD1306.pdf
+	// u8g2 instead re-positions the pointer per page with the same +32 column
+	// offset (U8X8_MSG_DISPLAY_DRAW_TILE in u8x8_d_ssd1306_64x48.c).
+	d.CommandTuple(COLUMNADDR, d.colOffset)
+	d.Command(d.colOffset + uint8(d.width) - 1)
+	d.CommandTuple(PAGEADDR, 0)
+	d.Command(uint8(d.height/8) - 1)
+	if d.cmdErr != nil {
+		err := d.cmdErr
+		d.cmdErr = nil
+		return err
+	}
 	d.displaybuf[0] = 0x40 // data mode.
 	return d.bus.Tx(d.addr, d.displaybuf, nil)
 }
