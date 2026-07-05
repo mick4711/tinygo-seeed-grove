@@ -25,6 +25,14 @@ func (drw *Drawer) DrawRectangle(x, y, width, height int, on bool) error {
 	return DrawRectangle(drw.Buffer, x, y, width, height, drw.DisplayWidth, on)
 }
 
+func (drw *Drawer) DrawLine(x0, y0, x1, y1 int, on bool) error {
+	return DrawLine(drw.Buffer, x0, y0, x1, y1, drw.DisplayWidth, on)
+}
+
+func (drw *Drawer) DrawCircle(x, y, radius int, on bool) error {
+	return DrawCircle(drw.Buffer, x, y, radius, drw.DisplayWidth, on)
+}
+
 func BufferPixelByteOff(x int, y int, displayWidth int) int {
 	return 1 + x + (y/8)*displayWidth // +1 for the data mode byte.
 }
@@ -38,17 +46,23 @@ func DrawPixel(displayBuf []byte, x, y, displayWidth int, on bool) error {
 	if x < 0 || y < 0 || x >= displayWidth {
 		return errOutOfRange
 	}
-	idx := BufferPixelByteOff(x, y, displayWidth)
-	if idx >= len(displayBuf) {
+	if BufferPixelByteOff(x, y, displayWidth) >= len(displayBuf) {
 		return errShortBuffer
 	}
+	setPixel(displayBuf, x, y, displayWidth, on)
+	return nil
+}
+
+// setPixel writes a pixel without bounds checks; the caller must have
+// validated that (x, y) falls inside the buffer.
+func setPixel(displayBuf []byte, x, y, displayWidth int, on bool) {
 	bit := uint8(1) << PixelBitOff(y)
+	idx := BufferPixelByteOff(x, y, displayWidth)
 	if on {
 		displayBuf[idx] |= bit
 	} else {
 		displayBuf[idx] &^= bit
 	}
-	return nil
 }
 
 // DrawRectangle fills a rectangle at given coordinates, turning pixels on or off.
@@ -92,6 +106,106 @@ func DrawRectangle(displayBuf []byte, x, y, rectWidth, rectHeight, displayWidth 
 				row[i] &^= mask
 			}
 		}
+	}
+	return nil
+}
+
+// DrawLine draws a line between (x0, y0) and (x1, y1), both endpoints
+// included, using Bresenham's algorithm as in u8g2's u8g2_DrawLine:
+// https://github.com/olikraus/u8g2/blob/master/csrc/u8g2_line.c
+func DrawLine(displayBuf []byte, x0, y0, x1, y1, displayWidth int, on bool) error {
+	// Horizontal and vertical lines use the faster masked byte fills.
+	if x0 == x1 || y0 == y1 {
+		if x1 < x0 {
+			x0, x1 = x1, x0
+		}
+		if y1 < y0 {
+			y0, y1 = y1, y0
+		}
+		return DrawRectangle(displayBuf, x0, y0, x1-x0+1, y1-y0+1, displayWidth, on)
+	}
+	if x0 < 0 || y0 < 0 || x1 < 0 || y1 < 0 || x0 >= displayWidth || x1 >= displayWidth {
+		return errOutOfRange
+	}
+	dx, dy := x1-x0, y1-y0
+	if dx < 0 {
+		dx = -dx
+	}
+	if dy < 0 {
+		dy = -dy
+	}
+	// All line pixels fall inside the endpoints' bounding box, whose largest
+	// byte index is at (max x, max y), so one check covers the whole loop.
+	if BufferPixelByteOff(max(x0, x1), max(y0, y1), displayWidth) >= len(displayBuf) {
+		return errShortBuffer
+	}
+	// Transpose steep lines so the loop always steps along x.
+	steep := dy > dx
+	if steep {
+		x0, y0 = y0, x0
+		x1, y1 = y1, x1
+		dx, dy = dy, dx
+	}
+	if x0 > x1 {
+		x0, x1 = x1, x0
+		y0, y1 = y1, y0
+	}
+	ystep := 1
+	if y1 < y0 {
+		ystep = -1
+	}
+	err := dx / 2
+	for x, y := x0, y0; x <= x1; x++ {
+		px, py := x, y
+		if steep {
+			px, py = y, x
+		}
+		setPixel(displayBuf, px, py, displayWidth, on)
+		err -= dy
+		if err < 0 {
+			y += ystep
+			err += dx
+		}
+	}
+	return nil
+}
+
+// DrawCircle draws the outline of a circle centered at (x, y) using the
+// midpoint circle algorithm, as in u8g2's u8g2_DrawCircle:
+// https://github.com/olikraus/u8g2/blob/master/csrc/u8g2_circle.c
+func DrawCircle(displayBuf []byte, x, y, radius, displayWidth int, on bool) error {
+	if radius < 0 || x-radius < 0 || y-radius < 0 || x+radius >= displayWidth {
+		return errOutOfRange
+	}
+	// All circle pixels fall inside the bounding box, whose largest byte
+	// index is at (x+radius, y+radius), so one check covers the whole loop.
+	if BufferPixelByteOff(x+radius, y+radius, displayWidth) >= len(displayBuf) {
+		return errShortBuffer
+	}
+	f := 1 - radius
+	ddfx, ddfy := 1, -2*radius
+	dx, dy := 0, radius
+	for {
+		// One point per octant, mirrored around the center.
+		setPixel(displayBuf, x+dx, y+dy, displayWidth, on)
+		setPixel(displayBuf, x-dx, y+dy, displayWidth, on)
+		setPixel(displayBuf, x+dx, y-dy, displayWidth, on)
+		setPixel(displayBuf, x-dx, y-dy, displayWidth, on)
+		setPixel(displayBuf, x+dy, y+dx, displayWidth, on)
+		setPixel(displayBuf, x-dy, y+dx, displayWidth, on)
+		setPixel(displayBuf, x+dy, y-dx, displayWidth, on)
+		setPixel(displayBuf, x-dy, y-dx, displayWidth, on)
+		if dx >= dy {
+			break
+		}
+		if f >= 0 {
+			dy--
+			ddfy += 2
+			f += ddfy
+		}
+		dx++
+		ddfx += 2
+		f += ddfx
 	}
 	return nil
 }

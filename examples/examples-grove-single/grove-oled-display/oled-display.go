@@ -51,5 +51,4 @@ func main() {
 		time.Sleep(time.Second)
 		drawer.Clear()
 	}
-
 }
