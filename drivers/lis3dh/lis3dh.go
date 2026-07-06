@@ -76,6 +76,8 @@ type Device struct {
 	addr     uint16
 	accRange int32   // raw counts per g, per Seeed's calibration.
 	data     [6]byte // last values read by Update.
+	wbuf     [2]byte
+	rbuf     [2]byte
 }
 
 var errWrongChip = errors.New("lis3dh: WHO_AM_I mismatch (not a LIS3DH at this address)")
@@ -164,7 +166,9 @@ func (d *Device) toMilliG(raw int16) int32 {
 }
 
 func (d *Device) writeReg(reg, val byte) error {
-	return d.bus.Tx(d.addr, []byte{reg, val}, nil)
+	d.wbuf[0] = reg
+	d.wbuf[1] = val
+	return d.bus.Tx(d.addr, d.wbuf[:2], nil)
 }
 
 func (d *Device) readReg(reg byte) (byte, error) {
@@ -173,7 +177,7 @@ func (d *Device) readReg(reg byte) (byte, error) {
 	// back-to-back combined reads race and return the previous read's byte
 	// (values walk across axes). A short settle between reads serializes them.
 	time.Sleep(time.Millisecond)
-	var v [1]byte
-	err := d.bus.Tx(d.addr, []byte{reg}, v[:])
-	return v[0], err
+	d.wbuf[0] = reg
+	err := d.bus.Tx(d.addr, d.wbuf[:1], d.rbuf[:1])
+	return d.rbuf[0], err
 }
