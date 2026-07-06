@@ -28,6 +28,15 @@ func TestFont5x7A(t *testing.T) {
 	}
 }
 
+func TestFont5x7StringWidth(t *testing.T) {
+	if got := Font5x7.StringWidth("64x48"); got != 5*6 {
+		t.Errorf("StringWidth(\"64x48\") = %d, want %d", got, 5*6)
+	}
+	if got := Font5x7.StringWidth(""); got != 0 {
+		t.Errorf("StringWidth(\"\") = %d, want 0", got)
+	}
+}
+
 func BenchmarkDrawText(b *testing.B) {
 	const w, h = 64, 48
 	buf := make([]byte, ssd1306.BufferSize(w, h))

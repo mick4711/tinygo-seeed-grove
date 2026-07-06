@@ -76,6 +76,16 @@ func (f *Font) glyph(r rune) (offset, width, advance int) {
 	return f.glyphAt(gi)
 }
 
+// StringWidth returns the width in pixels DrawText advances when drawing s,
+// including the advance after the last glyph.
+func (f *Font) StringWidth(s string) (w int) {
+	for _, r := range s {
+		_, _, adv := f.glyph(r)
+		w += adv
+	}
+	return w
+}
+
 // DrawText blits s with its top-left corner at (x, y). The background is
 // transparent: on=true only sets lit glyph pixels, on=false only clears
 // them. Returns the x coordinate after the last glyph's advance, for
