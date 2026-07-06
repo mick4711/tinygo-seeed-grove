@@ -4,12 +4,12 @@ import (
 	"time"
 
 	grove "github.com/soypat/seeed-grove"
-	"tinygo.org/x/drivers/lis3dh"
+	"github.com/soypat/seeed-grove/drivers/lis3dh"
+	"tinygo.org/x/drivers"
 )
 
 const ConnPos = 3
 
-// Define the hardware we are using.
 var (
 	shield        grove.ShieldXiao
 	accelerometer lis3dh.Device
@@ -17,16 +17,19 @@ var (
 
 func main() {
 	time.Sleep(time.Second)
-	accelerometer = lis3dh.New(shield.Conn(ConnPos).I2C(10_000))
-	// Seeed's Grove LIS3DHTR module straps SA0 high, so its I2C address is 0x19
-	// (Address1), not the driver's 0x18 default.
-	err := accelerometer.Configure(lis3dh.Config{Address: lis3dh.Address1})
-	if err != nil {
+
+	accelerometer = lis3dh.New(shield.Conn(ConnPos).I2C(100_000))
+	if err := accelerometer.Configure(lis3dh.Config{}); err != nil {
 		panic(err)
 	}
+
 	for {
+		// Acceleration returns the last read values; Update fetches fresh ones.
+		if err := accelerometer.Update(drivers.Acceleration); err != nil {
+			panic(err)
+		}
 		x, y, z := accelerometer.Acceleration()
 		println("x", x, "y", y, "z", z)
-		time.Sleep(time.Second)
+		time.Sleep(500 * time.Millisecond)
 	}
 }

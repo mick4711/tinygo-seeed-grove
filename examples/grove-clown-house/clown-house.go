@@ -15,6 +15,7 @@ const (
 	ConnAccel   = 4 // I2C
 	ConnRGB     = 5
 	ConnTouch   = 6
+	ConnBuzzer  = 7
 )
 
 // All hardware used in this project.
@@ -29,6 +30,7 @@ var (
 	touch       grove.PinInput
 	rot         grove.SensorRotaryAngle
 	sound       grove.SensorSound
+	buzzer      grove.ADC
 )
 
 func main() {
