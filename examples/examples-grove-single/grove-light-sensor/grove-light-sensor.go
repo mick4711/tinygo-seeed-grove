@@ -6,16 +6,19 @@ import (
 	grove "github.com/soypat/seeed-grove"
 )
 
+const ConnPosition = 2
+
 // Define the hardware we are using.
-var shield grove.ShieldXiao
+var (
+	shield grove.ShieldXiao
+	light  grove.SensorLight
+)
 
 func main() {
-	light := shield.Conn(0).ADC()
+	light.Configure(shield.Conn(ConnPosition).ADC(), 1)
 	for {
 		// Brighter light lowers the photoresistor, raising the analog reading.
-		v := light.ReadAnalogValue()
-		pct := int(uint32(v) * 100 / 65535)
-		println("raw:", v, "brightness%:", pct)
+		println("raw:", light.Raw(), "brightness%:", 100*light.Fraction(), "lux:", light.Lux())
 		time.Sleep(200 * time.Millisecond)
 	}
 }
