@@ -37,6 +37,10 @@ func (drw *Drawer) DrawFilledCircle(x, y, radius int, on bool) error {
 	return DrawFilledCircle(drw.Buffer, x, y, radius, drw.DisplayWidth, on)
 }
 
+func (drw *Drawer) DrawText(x, y int, s string, f *Font, on bool) (int, error) {
+	return DrawText(drw.Buffer, x, y, s, f, drw.DisplayWidth, on)
+}
+
 func BufferPixelByteOff(x int, y int, displayWidth int) int {
 	return 1 + x + (y/8)*displayWidth // +1 for the data mode byte.
 }

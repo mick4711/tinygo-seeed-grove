@@ -6,11 +6,13 @@ import (
 	grove "github.com/soypat/seeed-grove"
 )
 
+const ConnPosition = 1
+
 // Define the hardware we are using.
 var shield grove.ShieldXiao
 
 func main() {
-	buzzer := shield.Conn(0).PinOutput()
+	buzzer := shield.Conn(ConnPosition).PinOutput()
 	// Toggle the pin to make a square wave; half-period sets the pitch.
 	const halfPeriod = 500 * time.Microsecond // ~1 kHz
 	for {
