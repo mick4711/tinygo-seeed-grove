@@ -1,6 +1,10 @@
 package ssd1306
 
-import "unicode/utf8"
+import (
+	"unicode/utf8"
+
+	"github.com/soypat/seeed-grove/drivers/fonts"
+)
 
 type Drawer struct {
 	DisplayWidth int
@@ -37,7 +41,7 @@ func (drw *Drawer) DrawFilledCircle(x, y, radius int, on bool) error {
 	return DrawFilledCircle(drw.Buffer, x, y, radius, drw.DisplayWidth, on)
 }
 
-func (drw *Drawer) DrawText(x, y int, s string, f *Font, on bool) (int, error) {
+func (drw *Drawer) DrawText(x, y int, s string, f *fonts.Font, on bool) (int, error) {
 	return DrawText(drw.Buffer, x, y, s, f, drw.DisplayWidth, on)
 }
 

@@ -1,20 +1,25 @@
 package ssd1306
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/soypat/seeed-grove/drivers/fonts"
+)
 
 // testFont has one 3x16 glyph (two pages) mapped to '0' so multi-page and
 // unaligned blits can be checked against a per-pixel reference.
-var testFont = NewFont(16,
+var testFont = fonts.NewFont(16,
 	"\xff\x0f\xaa"+ // page 0
 		"\x01\xf0\x55", // page 1
 	"\x00\x00\x03\x04", // offset 0, width 3, advance 4
-	[]GlyphRange{{FirstRune: '0', GlyphStart: 0, Count: 1}},
+	[]fonts.GlyphRange{{FirstRune: '0', GlyphStart: 0, Count: 1}},
 )
 
 // testFontPixel reports the reference value of glyph pixel (i, j) straight
 // from the bitmap string.
 func testFontPixel(i, j int) bool {
-	return testFont.bitmaps[(j/8)*3+i]&(1<<(j%8)) != 0
+	bm, _, _ := testFont.Glyph('0')
+	return bm[(j/8)*3+i]&(1<<(j%8)) != 0
 }
 
 func TestDrawTextAgainstReference(t *testing.T) {

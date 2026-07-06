@@ -45,14 +45,13 @@ import (
 	"time"
 
 	grove "github.com/soypat/seeed-grove"
+	"github.com/soypat/seeed-grove/drivers/fonts"
 	"github.com/soypat/seeed-grove/drivers/ssd1306"
-	"github.com/soypat/seeed-grove/drivers/ssd1306/fonts"
 )
 
 const (
-	ConnPosition  = 4
+	ConnPosition  = 3
 	width, height = 64, 48
-	advance       = 6 // Font5x7 pixel advance.
 	frameTime     = 30 * time.Millisecond
 )
 
@@ -154,8 +153,7 @@ func loading(drw *ssd1306.Drawer) {
 			drw.DrawRectangle(barX+2, barY+2, fill, barH-4, true)
 		}
 		// Center "NN%" without building a string on the heap.
-		n := 1 + numDigits(p)
-		x := (width - (advance*n - 1)) / 2
+		x := (width - (numberWidth(p) + font.StringWidth("%"))) / 2
 		x = drawNumber(drw, x, 34, p)
 		drw.DrawText(x, 34, "%", font, true)
 		display.Display()
@@ -174,7 +172,7 @@ func border(drw *ssd1306.Drawer) {
 
 // centerText draws s horizontally centered at row y.
 func centerText(drw *ssd1306.Drawer, y int, s string) {
-	drw.DrawText((width-(advance*len(s)-1))/2, y, s, font, true)
+	drw.DrawText((width-font.StringWidth(s))/2, y, s, font, true)
 }
 
 // drawNumber draws n in decimal at (x, y) and returns the next x. Digits are
@@ -189,13 +187,15 @@ func drawNumber(drw *ssd1306.Drawer, x, y, n int) int {
 	return x
 }
 
-func numDigits(n int) int {
-	d := 1
+// numberWidth returns the pixel width drawNumber uses for n.
+func numberWidth(n int) int {
+	const digits = "0123456789"
+	w := font.StringWidth(digits[n%10 : n%10+1])
 	for n >= 10 {
 		n /= 10
-		d++
+		w += font.StringWidth(digits[n%10 : n%10+1])
 	}
-	return d
+	return w
 }
 
 // step advances position p by velocity v, reflecting at lo and hi inclusive.

@@ -4,8 +4,8 @@ import (
 	"time"
 
 	grove "github.com/soypat/seeed-grove"
+	"github.com/soypat/seeed-grove/drivers/fonts"
 	"github.com/soypat/seeed-grove/drivers/ssd1306"
-	"github.com/soypat/seeed-grove/drivers/ssd1306/fonts"
 )
 
 const (
