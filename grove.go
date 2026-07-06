@@ -1,3 +1,5 @@
+//go:generate go run ./internal/docgen -w ./docs
+
 package grove
 
 import (
