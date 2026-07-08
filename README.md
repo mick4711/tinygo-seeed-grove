@@ -35,3 +35,12 @@ tinygo monitor
 
 Using a different XIAO board? Swap the target: `xiao-esp32s3`, `xiao-rp2040`,
 `xiao-rp2350`, `xiao-ble`.
+
+## Audiovisual examples
+
+### grove-oled-display example
+![oled usage example](./docs/oled-example.gif)
+
+### grove-sound-wav example (microphone and .WAV recorder on PC)
+<video src="https://github.com/user-attachments/assets/21e4de98-c6fb-4e04-8663-23bb04abb684" controls></video>
+
