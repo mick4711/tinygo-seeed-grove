@@ -9,6 +9,9 @@ The [guide](docs/README.md) walks you from zero — no electronics experience �
 through every module in the kit, one concept at a time, ending with full
 multi-device projects.
 
+## 💸 No TinyGo Starter Kit? [**Get it here →**](https://www.seeedstudio.com/tinygo-xiao-starter-kit.html)
+<img width="50%" alt="image" src="https://github.com/user-attachments/assets/37cae97a-e9de-40aa-b708-cdd878d7a495" />
+
 ## What's in this repository
 
 - **[`grove`](grove.go)** (root package) — the Grove shield abstraction
