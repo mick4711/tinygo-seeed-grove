@@ -16,58 +16,58 @@ la	440		2272.727273	1136.363636
 te	493.9	2024.701357	1012.350678
 do	523.2	1911.314985	955.6574924
 */
-const ConnPosition = 0
+const ConnPosition = 2
 
 // Define the hardware we are using.
 var shield grove.ShieldXiao
 
 func main() {
 	buzzer := shield.Conn(ConnPosition).PinOutput()
-	// Toggle the pin to make a square wave; half-period sets the pitch.
-	const do = 1911 * time.Microsecond // 261.6 Hz
-	const re = 1702 * time.Microsecond // 293.7 Hz
-	const me = 1516 * time.Microsecond // 329.6 Hz
-	const fa = 1432 * time.Microsecond // 349.2 Hz
-	const so = 1275 * time.Microsecond // 392.0 Hz
-	const la = 1136 * time.Microsecond // 440.0 Hz
-	const te = 1012 * time.Microsecond // 493.9 Hz
-	const hd = 956 * time.Microsecond  // 523.2 Hz
+	// playScale(buzzer)
 	for {
-		println("do", do)
-		beep(buzzer, do, 200*time.Millisecond)
-		time.Sleep(time.Second)
+		wail(buzzer)
+	}
+}
 
-		println("re", re)
-		beep(buzzer, re, 200*time.Millisecond)
-		time.Sleep(time.Second)
+func wail(buzzer grove.PinOutput) {
+	println("going up")
+	for t := 1000 * time.Microsecond; t >= 300 * time.Microsecond; t -= 20 * time.Microsecond {
+		beep(buzzer, t, 50*time.Millisecond)
+		time.Sleep(time.Millisecond)
+	}
+	time.Sleep(50 * time.Millisecond)
 
-		println("me")
-		beep(buzzer, me, 200*time.Millisecond)
-		time.Sleep(time.Second)
+	println("going down")
+	for t := 300 * time.Microsecond; t <= 1000 * time.Microsecond; t += 20 * time.Microsecond {
+		beep(buzzer, t, 50*time.Millisecond)
+		time.Sleep(time.Millisecond)
+	}
+	time.Sleep(50 * time.Millisecond)
+}
 
-		println("fa")
-		beep(buzzer, fa, 200*time.Millisecond)
-		time.Sleep(time.Second)
-
-		println("so")
-		beep(buzzer, so, 200*time.Millisecond)
-		time.Sleep(time.Second)
-
-		println("la")
-		beep(buzzer, la, 200*time.Millisecond)
-		time.Sleep(time.Second)
-
-		println("te")
-		beep(buzzer, te, 200*time.Millisecond)
-		time.Sleep(time.Second)
-
-		println("hd")
-		beep(buzzer, hd, 200*time.Millisecond)
-		time.Sleep(time.Second)
+func playScale(buzzer grove.PinOutput) {
+	us := 1* time.Microsecond
+	scale := []time.Duration{
+		1911 * us, 
+		1702 * us, 
+		1516 * us, 
+		1432 * us, 
+		1275 * us, 
+		1136 * us, 
+		1012 * us, 
+		956 * us, 
+	}
+	for {
+		for _, note := range scale {
+			println("note", note)
+			beep(buzzer, note, 200*time.Millisecond)
+			time.Sleep(time.Second)
+		}
 	}
 }
 
 func beep(pin grove.PinOutput, halfPeriod, dur time.Duration) {
+	// Toggle the pin to make a square wave; half-period sets the pitch.
 	for elapsed := time.Duration(0); elapsed < dur; elapsed += 2 * halfPeriod {
 		pin.High()
 		time.Sleep(halfPeriod)
