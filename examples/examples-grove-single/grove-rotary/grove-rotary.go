@@ -13,7 +13,7 @@ var (
 )
 
 func main() {
-	rotary.Configure(shield.Conn(0).ADC(), 1)
+	rotary.Configure(shield.Conn(0).ADC(), 64)
 	for {
 		// Full clockwise travel is ~300 degrees across the ADC range.
 		angle := rotary.AngleDegrees()
