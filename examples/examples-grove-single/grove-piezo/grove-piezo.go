@@ -15,7 +15,7 @@ func main() {
 	piezo := shield.Conn(0).ADC()
 	// A vibration/knock spikes the analog output above the resting level.
 	n := 0
-	const threshold = 8000
+	const threshold = 1000
 	for {
 		v := piezo.ReadAnalogValue()
 		if v > threshold {
