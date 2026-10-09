@@ -17,7 +17,7 @@ func main() {
 	temp.ConfigureThermistor(shield.Conn(0).ADC(), NumSamples)
 	for {
 		celsius := temp.ReadTemperature()
-		println("celsius:", int(celsius))
+		println("celsius:", int(celsius*10))
 		time.Sleep(500 * time.Millisecond)
 	}
 }
