@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	grove "github.com/soypat/seeed-grove"
@@ -13,11 +14,11 @@ var (
 )
 
 func main() {
-	const NumSamples = 16
+	const NumSamples = 2048
 	temp.ConfigureThermistor(shield.Conn(0).ADC(), NumSamples)
 	for {
 		celsius := temp.ReadTemperature()
-		println("celsius:", int(celsius*10))
-		time.Sleep(500 * time.Millisecond)
+		fmt.Printf("time: %s celsius: %.3f\n", time.Now().Format("03 hr - 04 min"), celsius)
+		time.Sleep(5 * time.Minute)
 	}
 }
