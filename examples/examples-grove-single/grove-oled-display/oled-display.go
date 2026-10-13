@@ -12,16 +12,21 @@ const (
 	ConnPosition  = 3
 	width, height = 64, 48
 	frameTime     = 30 * time.Millisecond
+	NumSamples = 16
 )
 
 // Define the hardware we are using.
 var (
 	shield  grove.ShieldXiao
 	display ssd1306.Device
+	temp   grove.SensorTemperature
+	// rotary grove.SensorRotaryAngle
 	font    = &fonts.Font5x7
 )
 
 func main() {
+	temp.ConfigureThermistor(shield.Conn(0).ADC(), NumSamples)
+	// rotary.Configure(shield.Conn(0).ADC(), 1)
 	time.Sleep(time.Second) // wait for USB connection.
 	err := display.ConfigureI2C(shield.Conn(ConnPosition).I2C(400_000), ssd1306.Config{
 		Width:  width,
@@ -36,10 +41,13 @@ func main() {
 		Buffer:       display.CurrentDisplayBuffer(),
 	}
 	for {
-		splash(&drawer)
-		bounce(&drawer)
-		ping(&drawer)
-		loading(&drawer)
+		// splash(&drawer)
+		// bounce(&drawer)
+		// ping(&drawer)
+		// heartbeat(&drawer)
+		// loading(&drawer)
+		// loadRotary(&drawer, rotary.Fraction())
+		temperature(&drawer, temp.ReadTemperature())
 	}
 }
 
@@ -95,6 +103,70 @@ func ping(drw *ssd1306.Drawer) {
 			time.Sleep(2 * frameTime)
 		}
 	}
+}
+
+// draws filled circles getting bigger and smaller.
+func temperature(drw *ssd1306.Drawer, temp float32) {
+	drw.Clear()
+	border(drw)
+
+	drawNumber(drw, width / 2, height / 2, int(temp))
+
+	display.Display()
+	time.Sleep(1 * time.Second)
+}
+
+// draws filled circles getting bigger and smaller.
+func heartbeat(drw *ssd1306.Drawer) {
+	const cx, cy, maxRadius, spacing = width / 2, height / 2, 14, 5
+	for i := 0; i < 5; i++ {
+		for r := 1; r <= maxRadius; r++ {
+			drw.Clear()
+			border(drw)
+			drw.DrawFilledCircle(cx, cy, r, true)
+			// drw.DrawFilledCircle(cx, cy, 1, true)
+			// for wave := r; wave > 0; wave -= spacing {
+			// 	drw.DrawCircle(cx, cy, wave, true)
+			// }
+			display.Display()
+			time.Sleep(2 * frameTime)
+		}
+		for r := maxRadius; r >= 1; r-- {
+			drw.Clear()
+			border(drw)
+			drw.DrawFilledCircle(cx, cy, r, true)
+			// drw.DrawFilledCircle(cx, cy, 1, true)
+			// for wave := r; wave > 0; wave -= spacing {
+			// 	drw.DrawCircle(cx, cy, wave, true)
+			// }
+			display.Display()
+			time.Sleep(2 * frameTime)
+		}
+	}
+}
+
+// loading fills a progress bar proportional to rotary fraction.
+func loadRotary(drw *ssd1306.Drawer, frac float32) {
+	const barX, barY, barW, barH = 6, 20, width - 12, 9
+	p := int(frac * 100.0)
+
+	drw.Clear()
+	border(drw)
+	centerText(drw, 7, "percent")
+	drw.DrawRectangle(barX, barY, barW, 1, true)
+	drw.DrawRectangle(barX, barY+barH-1, barW, 1, true)
+	drw.DrawRectangle(barX, barY, 1, barH, true)
+	drw.DrawRectangle(barX+barW-1, barY, 1, barH, true)
+	if fill := p * (barW - 4) / 100; fill > 0 {
+		drw.DrawRectangle(barX+2, barY+2, fill, barH-4, true)
+	}
+	// Center "NN%" without building a string on the heap.
+	x := (width - (numberWidth(p) + font.StringWidth("%"))) / 2
+	x = drawNumber(drw, x, 34, p)
+	drw.DrawText(x, 34, "%", font, true)
+
+	display.Display()
+	time.Sleep(200 * time.Millisecond)
 }
 
 // loading fills a progress bar and prints the percentage under it.
