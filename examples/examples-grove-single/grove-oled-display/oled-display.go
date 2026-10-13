@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	grove "github.com/soypat/seeed-grove"
@@ -12,7 +13,7 @@ const (
 	ConnPosition  = 3
 	width, height = 64, 48
 	frameTime     = 30 * time.Millisecond
-	NumSamples = 16
+	NumSamples = 8192
 )
 
 // Define the hardware we are using.
@@ -110,10 +111,14 @@ func temperature(drw *ssd1306.Drawer, temp float32) {
 	drw.Clear()
 	border(drw)
 
-	drawNumber(drw, width / 2, height / 2, int(temp))
+	centerText(drw, (height / 2) - 12, "Temp:")
+	disp := fmt.Sprintf("%.2f C", temp)
+	centerText(drw, (height / 2) + 3, disp)
 
 	display.Display()
-	time.Sleep(1 * time.Second)
+	fmt.Printf("time: %s celsius: %.3f\n", time.Now().Format("03 hr - 04 min"), temp)
+
+	time.Sleep(5 * time.Second)
 }
 
 // draws filled circles getting bigger and smaller.
