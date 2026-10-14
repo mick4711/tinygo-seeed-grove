@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	ConnPosition  = 3
+	ConnPosition  = 4
 	width, height = 64, 48
 	frameTime     = 30 * time.Millisecond
 	NumSamples = 8192
