@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	ConnPosBuzz  = 1
 	ConnPosAcc  = 3
 	ConnPosOled  = 4
 	width, height = 64, 48
@@ -26,7 +27,7 @@ var (
 
 func main() {
 	time.Sleep(time.Second)
-
+	buzzer := shield.Conn(ConnPosBuzz).PinOutput()
 	accelerometer = lis3dh.New(shield.Conn(ConnPosAcc).I2C(100_000))
 	if err := accelerometer.Configure(lis3dh.Config{}); err != nil {
 		panic(err)
@@ -45,16 +46,38 @@ func main() {
 		Buffer:       display.CurrentDisplayBuffer(),
 	}
 
-	drawer.DrawPixel(0, 0, true)
 	for {
 		// Acceleration returns the last read values; Update fetches fresh ones.
 		if err := accelerometer.Update(drivers.Acceleration); err != nil {
 			panic(err)
 		}
 		x, y, z := accelerometer.Acceleration()
+		buzz( x, y, z, buzzer)
 		drawPixel(&drawer, x, y)
 		println("x", x, "y", y, "z", z)
 		time.Sleep(500 * time.Millisecond)
+	}
+}
+
+func buzz(xa, ya, za  int32, pin grove.PinOutput) {
+	if abs(int(xa)) + abs(int(ya)) + abs(int(za)) > 2000 {
+		beep(pin, 500 * time.Microsecond, 200*time.Millisecond)
+	}
+}
+
+func abs(n int) int{
+	if n < 0 {
+		return -n
+	}
+	return n
+}
+
+func beep(pin grove.PinOutput, halfPeriod, dur time.Duration) {
+	for elapsed := time.Duration(0); elapsed < dur; elapsed += 2 * halfPeriod {
+		pin.High()
+		time.Sleep(halfPeriod)
+		pin.Low()
+		time.Sleep(halfPeriod)
 	}
 }
 
