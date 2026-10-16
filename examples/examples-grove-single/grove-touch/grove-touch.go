@@ -7,12 +7,16 @@ import (
 )
 
 // Define the hardware we are using.
-var shield grove.ShieldXiao
+var (
+	shield grove.ShieldXiao
+	touch       grove.PinInput
+	buzzer      grove.PinOutput
+)
 
 func main() {
 	// Capacitive touch drives the data line high while a finger is present.
-	buzzer := shield.Conn(1).PinOutput()
-	touch := shield.Conn(0).PinInputPulldown()
+	touch = shield.Conn(6).PinInputPulldown()
+	buzzer = shield.Conn(7).PinOutput()
 	lastPrint := time.Now()
 	last := false
 	for {
