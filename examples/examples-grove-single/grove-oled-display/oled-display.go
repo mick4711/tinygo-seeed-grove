@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	ConnPosition  = 4
+	ConnTemp  = 0
+	ConnOled  = 4
 	width, height = 64, 48
 	frameTime     = 30 * time.Millisecond
 	NumSamples = 8192
@@ -26,10 +27,10 @@ var (
 )
 
 func main() {
-	temp.ConfigureThermistor(shield.Conn(0).ADC(), NumSamples)
+	temp.ConfigureThermistor(shield.Conn(ConnTemp).ADC(), NumSamples)
 	// rotary.Configure(shield.Conn(0).ADC(), 1)
 	time.Sleep(time.Second) // wait for USB connection.
-	err := display.ConfigureI2C(shield.Conn(ConnPosition).I2C(400_000), ssd1306.Config{
+	err := display.ConfigureI2C(shield.Conn(ConnOled).I2C(400_000), ssd1306.Config{
 		Width:  width,
 		Height: height,
 		Buffer: make([]byte, ssd1306.BufferSize(width, height)),
@@ -50,6 +51,21 @@ func main() {
 		// loadRotary(&drawer, rotary.Fraction())
 		temperature(&drawer, temp.ReadTemperature())
 	}
+}
+
+// display temperature in degC.
+func temperature(drw *ssd1306.Drawer, temp float32) {
+	drw.Clear()
+	border(drw)
+
+	centerText(drw, (height / 2) - 12, "Temp:")
+	disp := fmt.Sprintf("%.2f C", temp)
+	centerText(drw, (height / 2) + 3, disp)
+
+	display.Display()
+	fmt.Printf("time: %s celsius: %.3f\n", time.Now().Format("03 hr - 04 min"), temp)
+
+	time.Sleep(5 * time.Second)
 }
 
 // splash shows a framed title card.
@@ -104,21 +120,6 @@ func ping(drw *ssd1306.Drawer) {
 			time.Sleep(2 * frameTime)
 		}
 	}
-}
-
-// draws filled circles getting bigger and smaller.
-func temperature(drw *ssd1306.Drawer, temp float32) {
-	drw.Clear()
-	border(drw)
-
-	centerText(drw, (height / 2) - 12, "Temp:")
-	disp := fmt.Sprintf("%.2f C", temp)
-	centerText(drw, (height / 2) + 3, disp)
-
-	display.Display()
-	fmt.Printf("time: %s celsius: %.3f\n", time.Now().Format("03 hr - 04 min"), temp)
-
-	time.Sleep(5 * time.Second)
 }
 
 // draws filled circles getting bigger and smaller.
