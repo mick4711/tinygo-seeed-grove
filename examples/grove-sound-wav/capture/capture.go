@@ -30,7 +30,7 @@ const (
 var marker = []byte{0xDE, 0xAD, 0xBE, 0xEF}
 
 func main() {
-	port := "/dev/ttyACM0"
+	port := "COM5"
 	if len(os.Args) > 1 {
 		port = os.Args[1]
 	}
@@ -39,7 +39,7 @@ func main() {
 	// so bytes pass through untouched — no UTF-8 decoding to mangle them.
 	p, err := serial.Open(port, &serial.Mode{BaudRate: 115200})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Open port  error", err)
 	}
 	defer p.Close()
 	p.SetReadTimeout(2 * time.Second)
