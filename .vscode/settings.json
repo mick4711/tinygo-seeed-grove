@@ -2,7 +2,7 @@
     "go.toolsEnvVars": {
         "GOOS": "linux",
         "GOARCH": "arm",
-        "GOROOT": "/home/pato/.cache/tinygo/goroot-427ce7430a6339e75888b397fb3b58875ef91517aacd86b06d8949c199b7a843",
-        "GOFLAGS": "-tags=tinygo.riscv,baremetal,linux,arm,tinygo.riscv32,esp32c3,esp,xiao_esp32c3,tinygo,purego,osusergo,math_big_pure_go,gc.conservative,scheduler.tasks,serial.usb,tinygo.unicore"
+        "GOROOT": "C:\\Users\\mick4\\AppData\\Local\\tinygo\\goroot-9bc8f8b5cd3fa3b1237cdc59322b546e7eace23fbac5ba07a27d0e271ef954de",
+        "GOFLAGS": "-tags=tinygo.riscv,baremetal,linux,arm,tinygo.riscv32,esp32c3,esp,espradio,xiao_esp32c3,tinygo,purego,osusergo,math_big_pure_go,gc.conservative,scheduler.tasks,tinygo.unwind.setjmp,serial.usb,tinygo.unicore"
     }
 }
